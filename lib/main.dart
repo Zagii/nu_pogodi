@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -7,6 +8,8 @@ import 'package:flame/game.dart';
 import 'package:flame/image_composition.dart';
 import 'package:flutter/material.dart' hide Image;
 import 'package:nu_pogodi/actors/jajo.dart';
+import 'package:nu_pogodi/overlays/new_game_overlay.dart';
+import 'package:nu_pogodi/overlays/pause_game_overlay.dart';
 import 'package:nu_pogodi/world/button.dart';
 
 import 'actors/wilk.dart';
@@ -25,7 +28,15 @@ void main() {
              return OverlayController(
                game: game,
              );
-           }
+           },
+          'NewGameOverlay': (BuildContext context, MyGame game) {
+             return NewGameOverlayComponent(
+               game: game,
+             );
+           },
+           'PauseGameOverlay': (BuildContext context, MyGame game) {
+              return PauseGameOverlayComponent( game: game);}
+             
          },
       ),
     ),
@@ -34,11 +45,20 @@ void main() {
   //final game = FlameGame();
   //runApp(GameWidget(game: MyGame()));
 }
+enum GameState {idle,game,extraLife,gameOver,pause}
 
 class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   double chickenScaleFactor = 3.0;
 
+  int skucha=0;
+  int punkty=0;
+  int level=1;
+  int nextLvlUp=5;
+  int typGry=4;
 
+  GameState gameState=GameState.idle;  
+
+  late Timer timer;
 
   late WilkComponent wilkComponent;
   late RectangleComponent tloPodwietlenie;
@@ -46,6 +66,9 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late ObudowaComponent obudowaComponent;
   late SpriteComponent tloFixComponent;
   late TloComponent tloComponent;
+
+  late TextComponent punktyTextComponent;
+  late SkuchaComponent skuchaComponent;
 
   late ButtonComponent buttonLD;
 
@@ -81,8 +104,8 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     tloPodwietlenie = RectangleComponent(size:ekranSize ,position: ekranPos,paint: Paint()..color = Colors.white.withOpacity(1.0));
     add(tloPodwietlenie);
    
-   debugMode = true;
-    tloFixComponent = SpriteComponent.fromImage(await images.load('fix.png'))
+   
+    tloFixComponent = SpriteComponent.fromImage(await images.load('fix.png'),priority: 10)
       ..size =ekranSize
       ..position = ekranPos;
       
@@ -92,6 +115,18 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     ..size=Vector2(100,200);//ekranSize ;// Vector2(0, 50);
     add(wilkComponent);
 
+    var style =const  TextStyle(color: Colors.black,fontSize: 100, fontFamily:'digits',fontWeight: FontWeight.w900 );
+    final regular = TextPaint(style: style);
+    punktyTextComponent=TextComponent(text: '000000', priority: 10,
+    textRenderer: regular)
+      ..anchor = Anchor.topCenter
+      ..x = 1500
+      ..y = 450;
+
+    skuchaComponent=SkuchaComponent();
+    add(skuchaComponent);
+  
+    add(punktyTextComponent);
     tloComponent = TloComponent()
           ..size = tloFixComponent.size
       ..position = tloFixComponent.position;
@@ -102,12 +137,21 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
 cameraComponent.follow(obudowaComponent);
 
-    debugMode=true;
+    
     buttonLD = ButtonComponent()..position=Vector2(118, 470)..size=Vector2(120, 120);
    // add(buttonLD);
-  overlays.add('ButtonController');
-
-  add(Jajo());
+ // overlays.add('ButtonController');
+ 
+  
+   timer=Timer(
+      calcSpeed(),
+      onTick: ()  {
+       var rand = Random().nextInt(typGry);
+        add(Jajo(calcSpeed(),typJajo: Typ.values[rand]));
+      },
+      autoStart: false,
+      repeat: true,
+    );
 
   }
 
@@ -117,7 +161,107 @@ cameraComponent.follow(obudowaComponent);
     //ekranSize=size;
     super.onGameResize(size);
   }
+@override
+  void update(double dt) {
+    super.update(dt);
+    timer.update(dt);
+  }
 
+  double calcSpeed()
+  {
+    double r= 5-level*0.5;
+    if(r<0.1){r=0.10;}
+    return r;
+  }
+  prepareNowaGra()
+  {
+        overlays.add('NewGameOverlay');
+        pauseEngine();
+  }
+  nowaGra()
+  {
+    resumeEngine();
+  //  overlays.remove('NewGameOverlay');
+    print("Start nowej gry");
+    level=1;
+    nextLvlUp=5;
+    punkty=0;
+    skucha=0;
+    skuchaComponent.setSkucha(skucha);
+
+   
+    gameState = GameState.game;
+
+    timer.start();
+   
+     add(Jajo(calcSpeed()));
+    
+  }
+  gameOver()
+  {
+    timer.stop();
+  }
+  gamePause()
+  {
+    pauseEngine();
+    overlays.add('PauseGameOverlay');
+    //timer.pause();
+  }
+  gameResume()
+  {
+    resumeEngine();
+   // timer.resume();
+  }
+  addjajoSkucha()
+  {
+    skucha++;
+    skuchaComponent.setSkucha(skucha);
+    print("skucha: $skucha");
+    if(skucha==2)
+    {
+      //TODO: bonus punkt!!
+      gameOver();
+    }
+  }
+  addPunkt()
+  {
+    if(gameState != GameState.game){return;}
+    punkty++;
+    punktyTextComponent.text=punkty.toString().padLeft(6,'0');
+    if(punkty == nextLvlUp)
+    {
+      print("leelUp");
+      level++;
+      nextLvlUp*=2;
+      timer.limit=calcSpeed();
+    }
+    
+  }
+
+  buttonKlik(int i)
+  {
+    switch(gameState)
+    {
+      case GameState.game:
+        gamePause();
+        break;
+      case GameState.idle:
+        prepareNowaGra();
+        break;
+      case GameState.pause:
+        gameResume();
+      break;
+      default:  //,extraLife,gameOver,pause}
+      break;
+    }
+     
+  }
+
+  @override
+  void onRemove() {
+    timer.stop();
+    super.onRemove();
+  }
 }
 
 class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyGame>{
@@ -130,6 +274,10 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
     Vector2(200,1221),
     Vector2(2200,954),
     Vector2(2200,1221),
+    /////// male butony //////
+    Vector2(2182,157),
+     Vector2(2182,338),
+      Vector2(2182,519),
   ];
 
   List<Rect>buttonsRect=[
@@ -137,13 +285,18 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
     const Rect.fromLTWH(130,1200,300,300),
     const Rect.fromLTWH(2110,930,300,300),
     const Rect.fromLTWH(2110,1200,300,300),
+    const Rect.fromLTWH(2150,150,300,100),
+    const Rect.fromLTWH(2150,330,300,100),
+    const Rect.fromLTWH(2150,500,300,100),
   ];
 
-  List<bool>buttonPressed = [false,false,false,false];
+  List<bool>buttonPressed = [false,false,false,false,false,false,false];
 
   late Sprite pressedSprite;
-  late Sprite unpressedSprite;
+ // late Sprite unpressedSprite;
 
+ late Sprite pressedMalySprite;
+  //late Sprite unpressedMalySprite;
  @override
  FutureOr<void> onLoad() async{
     // TODO: implement onLoad
@@ -151,8 +304,10 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
  // final Image img = await images.load('obudowa.png');
     sprite =await Sprite.load('obudowa.png');
     pressedSprite = await gameRef.loadSprite('BtnDown.png');
-    unpressedSprite = await gameRef.loadSprite('BtnUp.png');
-
+    //unpressedSprite = await gameRef.loadSprite('BtnUp.png');
+    
+    pressedMalySprite = await gameRef.loadSprite('BtnDownMaly.png');
+    //unpressedSprite = await gameRef.loadSprite('BtnUp.png');
 
 
   return super.onLoad();
@@ -160,13 +315,19 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    for(int i=0;i<4;i++)
+    for(int i=0;i<buttonPressed.length;i++)
     {
       if(buttonPressed[i])
       {
-        pressedSprite.render(canvas,position: buttonsPoz[i]);
+        if(i<4)
+        { pressedSprite.render(canvas,position: buttonsPoz[i]);}
+        else
+        {
+          pressedMalySprite.render(canvas,position: buttonsPoz[i]);
+        }
       }else{
-        unpressedSprite.render(canvas,position: buttonsPoz[i]);
+   //     unpressedSprite.render(canvas,position: buttonsPoz[i]);
+  //  pressedMalySprite.render(canvas,position: buttonsPoz[i]);
       }
     }
   }
@@ -231,11 +392,13 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
   bool onTapDown(TapDownEvent event) {
    
    Vector2 klik=ekranToPicturePoint(event.localPosition);
-   for(int i=0;i<4;i++)
+   for(int i=0;i<buttonPressed.length;i++)
     {
       if(buttonsRect[i].contains(klik.toOffset())){
         buttonPressed[i]=true;
-        gameRef.wilkComponent.setPozycjaWilka(i);
+      if(i<4){  gameRef.wilkComponent.setPozycjaWilka(i);}else
+      { gameRef.buttonKlik(i); }
+
       }else{
         buttonPressed[i]=false;
       }
@@ -244,17 +407,26 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
      super.onTapDown(event);
     return true;
   }
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    for(int i=0;i<buttonPressed.length;i++)
+    {
+       buttonPressed[i]=false;
+     }
+     //print("tap cancel");
+    super.onTapCancel(event);
+  }
      @override
   bool onTapUp(TapUpEvent event) {
    
    Vector2 klik=ekranToPicturePoint(event.localPosition);
-   for(int i=0;i<4;i++)
+   for(int i=0;i<buttonPressed.length;i++)
     {
       if(buttonsRect[i].contains(klik.toOffset())){
         buttonPressed[i]=false;
       }
     }
-    print(klik.toString());
+  //  print(klik.toString());
      super.onTapUp(event);
     return true;
   }
@@ -282,5 +454,43 @@ class TloComponent extends PositionComponent {
     //  position: position,
     //  overridePaint: opacityPaint,
     );
+  }
+}
+
+class SkuchaComponent extends PositionComponent {
+  SkuchaComponent(): super(priority: 10);
+  late Sprite skuchaSprite;
+
+  int piskleSzt=1;
+  @override
+  FutureOr<void> onLoad() async {
+    skuchaSprite = await Sprite.load('piskle.png');
+  }
+  setSkucha(int i)
+  {
+    piskleSzt=i;
+  }
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+  if(piskleSzt>0)
+  {
+    skuchaSprite.render(canvas,size:Vector2.all(100),
+    position:Vector2(1480, 580));
+  }
+
+  if(piskleSzt>1)
+  {
+    skuchaSprite.render(canvas,size:Vector2.all(100),
+    position:Vector2(1380, 580));
+  }
+  if(piskleSzt>2)
+  {
+    skuchaSprite.render(canvas,size:Vector2.all(100),
+    position:Vector2(1280, 580));
+  }
+
+
   }
 }

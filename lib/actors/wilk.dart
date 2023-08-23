@@ -28,7 +28,7 @@ late WilkKolizaComponent wilkKolizjaComponent;
 
   @override
   FutureOr<void> onLoad() async {
-    debugMode = true;
+    
     pozycja = 0;
     spriteList.add(MojSprite(await Sprite.load('lewyGora.png'),
         Vector2(320, 340), Vector2(300, 300) * skalaLap));
@@ -43,7 +43,7 @@ late WilkKolizaComponent wilkKolizjaComponent;
     spriteList.add(MojSprite(await Sprite.load('wilkPrawy.png'),
         Vector2(640, 340), Vector2(365, 630) * skalaWilka));
 
-    wilkKolizjaComponent=WilkKolizaComponent()..position=spriteList[pozycja].pozycja..size=Vector2(150,150);
+    wilkKolizjaComponent=WilkKolizaComponent()..position=spriteList[pozycja].pozycja..size=Vector2(170,120);
     add(wilkKolizjaComponent);
     //add(RectangleHitbox().re..position=Vector2(330,300)..size=Vector2(300,400));
     print("wilkOnLoad comple");
@@ -109,7 +109,7 @@ class WilkKolizaComponent extends PositionComponent
 
   @override
   FutureOr<void> onLoad() async {
-    debugMode = true;
+    
     RectangleHitbox hitbox = RectangleHitbox();
 
 
@@ -120,7 +120,7 @@ class WilkKolizaComponent extends PositionComponent
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
     if (other is Jajo) {
-      print("jajo kolizja");
+      //print("jajo kolizja");
     }
   }
 }

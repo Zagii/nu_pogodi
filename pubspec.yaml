@@ -21,4 +21,9 @@ flutter:
 
   assets:
     - assets/images/
-
+    
+  fonts:
+    - family: digits
+      fonts:
+        - asset: assets/fonts/DISPLAY_FREE_TFB.ttf
+       

@@ -7,13 +7,30 @@ import 'package:nu_pogodi/main.dart';
 enum Typ { lewaGora, lewaDol, prawaGora, prawaDol }
 
 class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
+  Jajo(double speedJajo, {Typ typJajo = Typ.lewaDol}) //: super(priority: 2)
+  {
+    speed = speedJajo;
+
+    typ = typJajo;
+    // print("jajo speed: $speed");
+  }
   final pozycjaStartu = [
-    Vector2(750, 570),
+    Vector2(780, 600),
+    Vector2(780, 790),
+    Vector2(1780, 590),
+    Vector2(1780, 780),
   ];
 
   Typ typ = Typ.lewaGora;
   // late SpriteAnimation jajoAnimation;
-  late SpriteSheet spriteSheet;
+  late SpriteSheet spriteSheetJajo;
+  late Sprite spriteSkorupka;
+  late SpriteSheet spriteSheetKurczak;
+
+  Vector2 jajoSize = Vector2(96, 128) * 5 / 6;
+  Vector2 skorupkaSize = Vector2(311, 148) * 2 / 3;
+  Vector2 piskleSize = Vector2(148, 247) * 2 / 3;
+
   int spirteIndex = 0;
   double speed = .5;
 
@@ -23,17 +40,65 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    //final spriteSheet = SpriteAnimation.
+    switch (typ) {
+      case Typ.lewaGora:
+        spriteSheetJajo = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('jajoLG.png'),
+            columns: 5,
+            rows: 1);
 
-    // jajoAnimation =
-    //     spriteSheet.createAnimation(row: 0, stepTime: animationSpeed, to: 4);
+        spriteSheetKurczak = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('kurczakL.png'),
+            columns: 4,
+            rows: 1);
+        spriteSkorupka = await Sprite.load("skorupkiL.png");
+        break;
+      case Typ.lewaDol:
+        spriteSheetJajo = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('jajoLD.png'),
+            columns: 5,
+            rows: 1);
 
-    spriteSheet = SpriteSheet.fromColumnsAndRows(
-        image: await gameRef.images.load('jajoLG.png'), columns: 5, rows: 1);
-    // jajoAnimation =
-    //     spriteSheet.createAnimation(row: 0, stepTime: speed, from: 0, to: 5);
+        spriteSheetKurczak = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('kurczakL.png'),
+            columns: 4,
+            rows: 1);
+        spriteSkorupka = await Sprite.load("skorupkiL.png");
+        break;
+      case Typ.prawaGora:
+        spriteSheetJajo = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('jajoPG.png'),
+            columns: 5,
+            rows: 1);
 
-    sprite = spriteSheet.getSpriteById(spirteIndex);
+        spriteSheetKurczak = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('kurczakP_166.png'),
+            columns: 4,
+            rows: 1);
+        spriteSkorupka = await Sprite.load("skorupkiP.png");
+        break;
+      case Typ.prawaDol:
+        spriteSheetJajo = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('jajoPD.png'),
+            columns: 5,
+            rows: 1);
+
+        spriteSheetKurczak = SpriteSheet.fromColumnsAndRows(
+            image: await gameRef.images.load('kurczakP_166.png'),
+            columns: 4,
+            rows: 1);
+        spriteSkorupka = await Sprite.load("skorupkiP.png");
+        break;
+    }
+    sprite = spriteSheetJajo.getSpriteById(spirteIndex);
+    size = jajoSize;
+
+    skorupkaSize = (typ == Typ.lewaDol || typ == Typ.lewaGora)
+        ? Vector2(311, 148) * 2 / 3
+        : Vector2(329, 143) * 2 / 3;
+    piskleSize = (typ == Typ.lewaDol || typ == Typ.lewaGora)
+        ? Vector2(148, 247) * 2 / 3
+        : Vector2(166, 247) * 2 / 3;
 
     add(
       RectangleHitbox(
@@ -47,11 +112,26 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
   }
 
   Sprite getNextSprite() {
+    late Sprite r;
     spirteIndex++;
     if (spirteIndex < 5) {
-      return spriteSheet.getSpriteById(spirteIndex);
+      r = spriteSheetJajo.getSpriteById(spirteIndex);
+      size = jajoSize;
     }
-    return spriteSheet.getSpriteById(0);
+    if (spirteIndex == 5) {
+      r = spriteSheetJajo.getSpriteById(0);
+      size = jajoSize;
+    }
+    if (spirteIndex == 6) {
+      r = spriteSkorupka;
+      size = skorupkaSize;
+    }
+    if (spirteIndex > 6) {
+      r = spriteSheetKurczak.getSpriteById(spirteIndex - 7);
+      size = piskleSize;
+    }
+
+    return r;
   }
 
   double sum = 0;
@@ -68,27 +148,26 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
 
     sprite = getNextSprite();
     position.y += 23;
-    if (typ == Typ.lewaGora || typ == Typ.lewaDol) {
-      if (!czyStluczone) {
-        
-        if (spirteIndex>5) {
-          position.y = 1000;
-          czyStluczone = true;
-        }else{
-        position.x += 40;}
-      }else
-      {
-        position.x-=40;
-        position.y = 1000;
-        if(position.x<700)
-        {
-          czyStluczone=false;
-          position = pozycjaStartu[typ.index];
-          spirteIndex = 0;
-        }
+    int znak = (typ == Typ.lewaGora || typ == Typ.lewaDol) ? 1 : -1;
+
+    if (!czyStluczone) { // jesli nie stluczone
+      if (spirteIndex > 5) { // rozbicie skorupki
+       
+        position.x = (typ == Typ.lewaGora || typ == Typ.lewaDol)? 930 : 1500;
+        position.y = 1030;
+        czyStluczone = true;
+        gameRef.addjajoSkucha();
+      } else { //turlanie
+        position.x += 40 * znak;
       }
-    } else {
-      position.x -= 30;
+    } else { // stluczone
+      if(spirteIndex==7)
+      {position.x = (typ == Typ.lewaGora || typ == Typ.lewaDol)? 930 : 1580;}
+      position.x -= 50 * znak;
+      position.y = 970;
+      if (spirteIndex >= 12) {
+        removeFromParent();
+      }
     }
 
     // if (position.y >= 850) {
@@ -100,8 +179,10 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
-    if (other is WilkComponent) {
+    if (other is WilkKolizaComponent) {
       print("wilk");
+      gameRef.addPunkt();
+      removeFromParent();
     }
   }
 }

@@ -21,7 +21,7 @@ bool isPressed=false;
   @override
   Future<void>? onLoad() async {
 
-    debugMode=true;
+    
     pressedSprite = await gameRef.loadSprite('BtnDown.png');
     _rect=const Rect.fromLTWH(100,100, 100,100 );
     unpressedSprite = await gameRef.loadSprite('BtnUp.png');
