@@ -2,7 +2,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:nu_pogodi/actors/wilk.dart';
-import 'package:nu_pogodi/main.dart';
+import 'package:nu_pogodi/my_game.dart';
 
 enum Typ { lewaGora, lewaDol, prawaGora, prawaDol }
 
@@ -138,7 +138,7 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    speed = 1.0;
+    ///speed = 1.0;
 
     sum += dt;
     if (sum < speed) {
@@ -180,7 +180,7 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
     if (other is WilkKolizaComponent) {
-      print("wilk");
+     // print("wilk");
       gameRef.addPunkt();
       removeFromParent();
     }

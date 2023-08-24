@@ -1,12 +1,6 @@
-//import 'package:flame_audio/flame_audio.dart';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-//import 'package:george/overlays/dialog_overlay.dart';
-import '../main.dart';
+import 'package:nu_pogodi/my_game.dart';
 
-//import 'audio_overlay.dart';
-//import 'score_overlay.dart';
 
 class OverlayController extends StatelessWidget {
   final MyGame game;
@@ -24,7 +18,7 @@ class OverlayController extends StatelessWidget {
         //you can use "right" and "bottom" too
         child:IconButton(icon:const Icon(Icons.home),
         onPressed:(){
-          print("pressed");
+         // print("pressed");
           //icon=Image.file(File("assets/images/BtnDown.png");
         }
         

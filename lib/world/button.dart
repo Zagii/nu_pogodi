@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
-import 'package:nu_pogodi/main.dart';
+import 'package:nu_pogodi/my_game.dart';
 
 class ButtonComponent extends PositionComponent//<ButtonState>
     with HasGameRef<MyGame>, TapCallbacks {
@@ -56,7 +56,7 @@ bool isPressed=false;
    
    // current=ButtonState.down;
    isPressed=true;
-    var p =event.localPosition;
+    //var p =event.localPosition;
     // print("Player tap down on ${event.localPosition.toString()}, ${event.canvasPosition.toString()}");
     
      super.onTapDown(event);
@@ -68,7 +68,7 @@ bool isPressed=false;
     super.onTapUp(event);
     isPressed=false;
   //  current=ButtonState.up;
-    print("tapUP");
+   // print("tapUP");
     //   var p =event.localPosition;
     // print("Player tap down on ${containsLocalPoint(p)}, ${p.toString()}");
      return true;

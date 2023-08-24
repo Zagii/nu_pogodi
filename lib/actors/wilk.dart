@@ -3,7 +3,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/image_composition.dart';
 import 'package:nu_pogodi/actors/jajo.dart';
-import 'package:nu_pogodi/main.dart';
+import 'package:nu_pogodi/my_game.dart';
 
 class WilkComponent extends PositionComponent
     with CollisionCallbacks, HasGameRef<MyGame> {
@@ -46,7 +46,7 @@ late WilkKolizaComponent wilkKolizjaComponent;
     wilkKolizjaComponent=WilkKolizaComponent()..position=spriteList[pozycja].pozycja..size=Vector2(170,120);
     add(wilkKolizjaComponent);
     //add(RectangleHitbox().re..position=Vector2(330,300)..size=Vector2(300,400));
-    print("wilkOnLoad comple");
+   // print("wilkOnLoad comple");
     return super.onLoad();
   }
 
@@ -72,8 +72,8 @@ late WilkKolizaComponent wilkKolizjaComponent;
 
   @override
   update(double dt) {}
-  setPozycjaWilka(int _pozycja) {
-    pozycja = _pozycja;
+  setPozycjaWilka(int newPozycja) {
+    pozycja = newPozycja;
     for (int i = 0; i < 4; i++) {
       if (pozycja == i) {
         wilkKolizjaComponent.position=spriteList[i].pozycja;
@@ -90,7 +90,7 @@ late WilkKolizaComponent wilkKolizjaComponent;
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
     if (other is Jajo) {
-      print("jajo kolizja");
+      //print("jajo kolizja");
     }
   }
 }
@@ -108,12 +108,9 @@ class WilkKolizaComponent extends PositionComponent
 
 
   @override
-  FutureOr<void> onLoad() async {
-    
+  FutureOr<void> onLoad() async {   
     RectangleHitbox hitbox = RectangleHitbox();
-
-
-    add(RectangleHitbox());
+    add(hitbox);
   }
 
   @override
