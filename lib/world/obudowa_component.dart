@@ -41,7 +41,7 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
   //late Sprite unpressedMalySprite;
  @override
  FutureOr<void> onLoad() async{
-    // TODO: implement onLoad
+
     parentSize=size;
  // final Image img = await images.load('obudowa.png');
     sprite =await Sprite.load('obudowa.png');
@@ -76,9 +76,7 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
 
   @override
   void onParentResize(Vector2 maxSize) {
-    // TODO: implement onParentResize
-   // print(maxSize.toString());
-    parentSize=maxSize;
+       parentSize=maxSize;
     super.onParentResize(maxSize);
   }
 
@@ -138,9 +136,9 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
     {
       if(buttonsRect[i].contains(klik.toOffset())){
         buttonPressed[i]=true;
-      if(i<4){  gameRef.wilkComponent.setPozycjaWilka(i);}else
+      if(i<4 && gameRef.gameState==GameState.game){  gameRef.wilkComponent.setPozycjaWilka(i);}else
       { gameRef.buttonKlik(i);
-      print(i);
+    //  print(i);
        }
       }else{
         buttonPressed[i]=false;

@@ -70,7 +70,7 @@ class GameOverOverlayComponent extends StatelessWidget {
               top: 220,
               //left: 0,
               width: 300,
-              child: Text("High score: ${game.typGry}",
+              child: Text("High score: ${game.typGry==TypGry.gameA? game.highScoreA:game.highScoreB}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 20,
@@ -79,7 +79,7 @@ class GameOverOverlayComponent extends StatelessWidget {
               top: 180,
               //left: 0,
            //   width: 300,
-              child: Text("Game mode ${game.typGry==4? "A":"B"}",
+              child: Text("Game mode ${game.typGry==TypGry.gameA? "A":"B"}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 15,

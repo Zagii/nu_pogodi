@@ -51,26 +51,17 @@ bool isPressed=false;
   }
   @override
   bool onTapDown(TapDownEvent event) {
-   
-    // TODO: implement onTapDown
-   
-   // current=ButtonState.down;
+  
    isPressed=true;
-    //var p =event.localPosition;
-    // print("Player tap down on ${event.localPosition.toString()}, ${event.canvasPosition.toString()}");
     
      super.onTapDown(event);
     return true;
   }
   @override
   bool onTapUp(TapUpEvent event) {
-    // TODO: implement onTapUp
+   
     super.onTapUp(event);
     isPressed=false;
-  //  current=ButtonState.up;
-   // print("tapUP");
-    //   var p =event.localPosition;
-    // print("Player tap down on ${containsLocalPoint(p)}, ${p.toString()}");
      return true;
   }
   // tap methods handler omitted...

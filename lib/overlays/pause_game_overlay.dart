@@ -70,7 +70,7 @@ class PauseGameOverlayComponent extends StatelessWidget {
               top: 200,
               //left: 0,
               width: 300,
-              child: Text("High score: ${game.typGry}",
+              child: Text("High score: ${game.typGry==TypGry.gameA? game.highScoreA:game.highScoreB}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 20,

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,10 @@ import 'package:nu_pogodi/world/button.dart';
 import 'package:nu_pogodi/world/obudowa_component.dart';
 import 'package:nu_pogodi/world/skucha_component.dart';
 import 'package:nu_pogodi/world/tlo_comonent.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 enum GameState { idle, game, extraLife, gameOver, pause }
+
+enum TypGry {gameA,gameB}
 
 class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   double chickenScaleFactor = 3.0;
@@ -20,7 +23,22 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   int punkty = 0;
   int level = 1;
   int nextLvlUp = 5;
-  int typGry = 4;
+  TypGry typGry = TypGry.gameA;
+
+  int highScoreA=0;
+  String highScoreNameA="";
+  int highScoreB=0;
+  String highScoreNameB="";
+  bool isAudio=false;
+
+  final String highScoreATag="A";
+  final String highScoreBTag="B";
+
+  final String highScoreNameATag="Aname";
+  final String highScoreNameBTag="Bname";
+  final String isAudioTag="isAudio"; //TODO obsluga audio
+
+ late SharedPreferences prefs;
 
   GameState gameState = GameState.idle;
 
@@ -34,12 +52,15 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TloComponent tloComponent;
 
   late TextComponent punktyTextComponent;
+  late TextComponent gameModeTextComponent;
   late SkuchaComponent skuchaComponent;
 
   late ButtonComponent buttonLD;
 
   Vector2 ekranSize = Vector2(1285, 845);
   Vector2 ekranPos = Vector2(665, 370);
+
+  bool isGameModeComponentVisible=true;
 
   int charlieEnergy = 0;
 
@@ -48,6 +69,16 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    
+    prefs = await SharedPreferences.getInstance();
+
+    highScoreA= prefs.getInt(highScoreATag)??0;
+    highScoreB= prefs.getInt(highScoreBTag)??0;
+
+    highScoreNameA= prefs.getString(highScoreNameATag)??"unknown";
+    highScoreNameB= prefs.getString(highScoreNameBTag)??"unknown";
+
+    isAudio =  prefs.getBool(isAudioTag)??true;
 
     //  cameraComponent = CameraComponent(world: world);
     cameraComponent = CameraComponent.withFixedResolution(
@@ -87,11 +118,26 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         fontFamily: 'digits',
         fontWeight: FontWeight.w900);
     final regular = TextPaint(style: style);
+    var style2 = const TextStyle(
+        color: Colors.black,
+        fontSize: 40,
+        fontFamily: 'digits',
+        fontWeight: FontWeight.w900);
+    final regular2 = TextPaint(style: style2);
     punktyTextComponent =
         TextComponent(text: '000000', priority: 10, textRenderer: regular)
           ..anchor = Anchor.topCenter
           ..x = 1500
           ..y = 450;
+
+    gameModeTextComponent =
+     TextComponent(text: "D E M O", priority: 10, textRenderer: regular2)
+          ..anchor = Anchor.topCenter
+          ..x = 1500
+          ..y = 650;
+    
+    setGameModeText();
+
 
     skuchaComponent = SkuchaComponent();
     add(skuchaComponent);
@@ -102,35 +148,51 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       ..position = tloFixComponent.position;
     add(tloComponent);
 
+
+
     obudowaComponent = ObudowaComponent(); //..size=ekranSize;
     add(obudowaComponent);
 
     cameraComponent.follow(obudowaComponent);
 
-    buttonLD = ButtonComponent()
-      ..position = Vector2(118, 470)
-      ..size = Vector2(120, 120);
-    // add(buttonLD);
-    // overlays.add('ButtonController');
+    // buttonLD = ButtonComponent()
+    //   ..position = Vector2(118, 470)
+    //   ..size = Vector2(120, 120);
+ 
 
     timer = Timer(
       calcCzestotliwoscJaj(),
       onTick: () {
-        var rand = Random().nextInt(typGry);
+        var rand = Random().nextInt(typGry==TypGry.gameA?4:3);
         add(Jajo(calcSpeedJaj(), typJajo: Typ.values[rand]));
+        if(gameState==GameState.idle){
+          int popPoz=wilkComponent.pozycja;
+          int r=Random().nextInt(4);
+          while(r==popPoz){r=Random().nextInt(4);}
+          wilkComponent.setPozycjaWilka(r);
+
+          setGameModeTextVisible(isGameModeComponentVisible);
+          isGameModeComponentVisible=!isGameModeComponentVisible;     
+          
+        }
       },
-      autoStart: false,
+      autoStart: true,
       repeat: true,
     );
+    children.register<Jajo>();
+    gameIdle();
   }
 
-  @override
-  void onGameResize(Vector2 size) {
-    // TODO: implement onGameResize
-    //ekranSize=size;
-    super.onGameResize(size);
+  setGameModeTextVisible(bool v)
+  {
+    if(isGameModeComponentVisible)
+          {
+            add(gameModeTextComponent);
+          }else
+          {
+            remove(gameModeTextComponent);
+          }
   }
-
   @override
   void update(double dt) {
     super.update(dt);
@@ -152,75 +214,157 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     return r;
   }
 
-  prepareNowaGra(int i) {
+  prepareNowaGra() {
     pauseEngine();
     overlays.add('NewGameOverlay');
   }
 
   nowaGra() {
+    
+    children.query<Jajo>().forEach((element) {remove(element);});
+   // print(jaja.length);
     resumeEngine();
     //  overlays.remove('NewGameOverlay');
     //print("Start nowej gry");
     level = 1;
     nextLvlUp = 5;
-    punkty = 0;
+    
+    setPunkty(0);
     skucha = 0;
     skuchaComponent.setSkucha(skucha);
 
     gameState = GameState.game;
+    setGameModeText();
     timer.limit=calcCzestotliwoscJaj();
-    timer.start();
+    //timer.start();
 
     add(Jajo(calcSpeedJaj()));
   }
 
+  setGameModeText()
+  {
+    switch(gameState)
+    {
+      case GameState.idle:
+      isGameModeComponentVisible=true;
+      gameModeTextComponent.text="D E M O";
+      
+      gameModeTextComponent.position=Vector2(1200, 600);
+
+        break;
+      case GameState.game:
+      if(typGry==TypGry.gameA)
+      {
+        isGameModeComponentVisible=true;
+        gameModeTextComponent.text="Mode A";
+        gameModeTextComponent.position=Vector2(850, 1120);
+      }else{
+        isGameModeComponentVisible=true;
+        gameModeTextComponent.text="Mode B";
+        gameModeTextComponent.position=Vector2(1800, 1120);
+      }
+      break;
+      default:
+        gameModeTextComponent.text="";
+      break;
+    }
+    
+  }
   gameIdle() {
+    
     gameState = GameState.idle;
+    resumeEngine();
+    setGameModeText();
+  
+    level=250;
+    timer.limit = calcCzestotliwoscJaj();
+  }
+
+  saveHighScoreA(int pkt,String name)
+  {
+    highScoreA=pkt;
+    prefs.setInt(highScoreATag,pkt);
+    prefs.setString(highScoreNameATag,name);
+  }
+  saveHighScoreB(int pkt,String name)
+  {
+    highScoreB=pkt;
+    prefs.setInt(highScoreBTag,pkt);
+    prefs.setString(highScoreNameBTag,name);
+  }
+  saveAudioSettings(bool isActive)
+  {
+    isAudio=isActive;
+    prefs.setBool(isAudioTag, isAudio);
   }
 
   gameOver() {
+    
     gameState = GameState.gameOver;
-    timer.stop();
+    setGameModeText();
+   // timer.stop();
     pauseEngine();
-    overlays.add("GameOverOverlay");
+    if(typGry==TypGry.gameA)
+    { // game A
+      if(punkty>highScoreA)
+      {
+       overlays.add("GameOverHighScoreOverlay");
+      }else { overlays.add("GameOverOverlay");}
+    }else
+    { // game B
+    if(punkty>highScoreB)
+      {
+       overlays.add("GameOverHighScoreOverlay");
+      }else { overlays.add("GameOverOverlay");}
+    }
+    
   }
 
   gamePause() {
+   
     gameState = GameState.pause;
     pauseEngine();
     overlays.add('PauseGameOverlay');
-    //timer.pause();
+    setGameModeText();
   }
 
   gameResume() {
+    
     gameState = GameState.game;
     resumeEngine();
-    // timer.resume();
+  setGameModeText();
   }
 
   addjajoSkucha() {
+     if (gameState != GameState.game) {
+      return;
+    }
     skucha++;
     skuchaComponent.setSkucha(skucha);
     //print("skucha: $skucha");
-    if (skucha >= 2) {
+    if (skucha >=3 ) {
       //TODO: bonus punkt!!
      gameOver();
     }
   }
-
+  setPunkty(int p)
+  {
+    punkty=p;
+    punktyTextComponent.text = p.toString().padLeft(6, '0');
+  }
   addPunkt() {
     if (gameState != GameState.game) {
       return;
     }
-    punkty++;
-    punktyTextComponent.text = punkty.toString().padLeft(6, '0');
+    setPunkty(++punkty);
+    
     if (punkty == nextLvlUp) {
       //print("leelUp");
       level++;
       //nextLvlUp *= 2;
       nextLvlUp += 5;
       timer.limit = calcCzestotliwoscJaj();
-      print("lvl: $level,  ${timer.limit}, predkJaj: ${calcSpeedJaj()}");
+     // print("lvl: $level,  ${timer.limit}, predkJaj: ${calcSpeedJaj()}");
     }
     
     //nowaGra();
@@ -233,8 +377,8 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         break;
       case GameState.idle:
         if (i == 4 || i == 5) {
-          typGry = i == 4 ? 4 : 3;
-          prepareNowaGra(i);
+          typGry = i == 4 ? TypGry.gameA : TypGry.gameB;
+          prepareNowaGra();
         }
         break;
       case GameState.pause:

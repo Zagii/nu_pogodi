@@ -17,6 +17,7 @@ class TloComponent extends PositionComponent {
     ///var rect = const Rect.fromLTWH(100, 100, 202, 220);
    // Paint opacityPaint = Paint()..color = Colors.white.withOpacity(0.7);
     
+    
 
     // tloPrzod.render(canvas);
     tloPrzod.render(
