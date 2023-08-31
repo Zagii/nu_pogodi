@@ -170,10 +170,6 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
       }
     }
 
-    // if (position.y >= 850) {
-    //   position = pozycjaStartu[typ.index];
-    //   spirteIndex = 0;
-    // }
   }
 
   @override

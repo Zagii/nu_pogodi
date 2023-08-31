@@ -8,13 +8,14 @@ class GameOverOverlayComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double y=40;
     return Container(
       color: const Color.fromARGB(255, 69, 65, 65).withAlpha(180),
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
           Positioned(
-              top: 10,
+              top: y+10,
               //  left: 0,
               child: Container(
                   width: 300,
@@ -26,7 +27,7 @@ class GameOverOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           const Positioned(
-              top: 50,
+              top: y+50,
               //  left: 0,
               child: Text("Gave Over",
                   style: TextStyle(
@@ -34,7 +35,7 @@ class GameOverOverlayComponent extends StatelessWidget {
                       fontSize: 30,
                       color: Color.fromARGB(255, 48, 132, 44)))),
           Positioned(
-              top: 100,
+              top: y+90,
               //  left: 0,
               child: Container(
                   width: 400,
@@ -46,7 +47,7 @@ class GameOverOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           Positioned(
-              top: 120,
+              top: y+120,
               left: 250,
               child: Container(
                   width: 70,
@@ -58,34 +59,34 @@ class GameOverOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           Positioned(
-              top: 150,
+              top: y+150,
               //left: 0,
               // width: 300,
-              child: Text("Score: ${game.punkty}",
+              child: Text("Your score: ${game.punkty}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 25,
                       color: Color.fromARGB(255, 48, 132, 44)))),
           Positioned(
-              top: 220,
+              top: y+210,
               //left: 0,
-              width: 300,
+            //  width: 300,
               child: Text("High score: ${game.typGry==TypGry.gameA? game.highScoreA:game.highScoreB}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
-                      fontSize: 20,
+                      fontSize: 25,
                       color: Color.fromARGB(255, 48, 132, 44)))),
                           Positioned(
-              top: 180,
+              top: y+180,
               //left: 0,
            //   width: 300,
               child: Text("Game mode ${game.typGry==TypGry.gameA? "A":"B"}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
-                      fontSize: 15,
-                      color: Color.fromARGB(255, 48, 132, 44)))),
+                      fontSize: 10,
+                      color: Color.fromARGB(255, 18, 86, 15)))),
           Positioned(
-            top: 250,
+            top: y+250,
             //left: 150,
           //  width: 200,
             child: Row(

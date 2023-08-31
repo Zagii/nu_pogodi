@@ -1,44 +1,45 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:nu_pogodi/actors/jajo.dart';
 import 'package:nu_pogodi/actors/wilk.dart';
+import 'package:nu_pogodi/actors/zajac.dart';
+import 'package:nu_pogodi/ad_helper.dart';
 import 'package:nu_pogodi/world/button.dart';
 import 'package:nu_pogodi/world/obudowa_component.dart';
 import 'package:nu_pogodi/world/skucha_component.dart';
 import 'package:nu_pogodi/world/tlo_comonent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-enum GameState { idle, game, extraLife, gameOver, pause }
 
-enum TypGry {gameA,gameB}
+enum GameState { idle, game, extraLife, gameOver, pause,optiosDialog }
+
+enum TypGry { gameA, gameB }
 
 class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
-  double chickenScaleFactor = 3.0;
-
   int skucha = 0;
   int punkty = 0;
   int level = 1;
   int nextLvlUp = 5;
   TypGry typGry = TypGry.gameA;
+  bool isBonusGame = false;
 
-  int highScoreA=0;
-  String highScoreNameA="";
-  int highScoreB=0;
-  String highScoreNameB="";
-  bool isAudio=false;
+  int highScoreA = 0;
+  String highScoreNameA = "";
+  int highScoreB = 0;
+  String highScoreNameB = "";
+  bool isAudio = false;
 
-  final String highScoreATag="A";
-  final String highScoreBTag="B";
+  final String highScoreATag = "A";
+  final String highScoreBTag = "B";
 
-  final String highScoreNameATag="Aname";
-  final String highScoreNameBTag="Bname";
-  final String isAudioTag="isAudio"; //TODO obsluga audio
+  final String highScoreNameATag = "Aname";
+  final String highScoreNameBTag = "Bname";
+  final String isAudioTag = "isAudio"; //TODO obsluga audio
 
- late SharedPreferences prefs;
+  late SharedPreferences prefs;
 
   GameState gameState = GameState.idle;
 
@@ -60,25 +61,36 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   Vector2 ekranSize = Vector2(1285, 845);
   Vector2 ekranPos = Vector2(665, 370);
 
-  bool isGameModeComponentVisible=true;
+  bool isGameModeComponentVisible = true;
 
-  int charlieEnergy = 0;
+  late AppLifecycleReactor appLifecycleReactor;
 
   final world = World();
   late final CameraComponent cameraComponent;
+
+  // Future<InitializationStatus> _initGoogleMobileAds() {
+  //   // TODO: Initialize Google Mobile Ads SDK
+  //   return MobileAds.instance.initialize();
+  // }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    
+    //await _initGoogleMobileAds();
+
+    AdHelper appOpenAdManager = AdHelper()..loadAd();
+    appLifecycleReactor =
+        AppLifecycleReactor(appOpenAdManager: appOpenAdManager);
+
     prefs = await SharedPreferences.getInstance();
 
-    highScoreA= prefs.getInt(highScoreATag)??0;
-    highScoreB= prefs.getInt(highScoreBTag)??0;
+    highScoreA = prefs.getInt(highScoreATag) ?? 0;
+    highScoreB = prefs.getInt(highScoreBTag) ?? 0;
 
-    highScoreNameA= prefs.getString(highScoreNameATag)??"unknown";
-    highScoreNameB= prefs.getString(highScoreNameBTag)??"unknown";
+    highScoreNameA = prefs.getString(highScoreNameATag) ?? "unknown";
+    highScoreNameB = prefs.getString(highScoreNameBTag) ?? "unknown";
 
-    isAudio =  prefs.getBool(isAudioTag)??true;
+    isAudio = prefs.getBool(isAudioTag) ?? true;
 
     //  cameraComponent = CameraComponent(world: world);
     cameraComponent = CameraComponent.withFixedResolution(
@@ -131,24 +143,18 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
           ..y = 450;
 
     gameModeTextComponent =
-     TextComponent(text: "D E M O", priority: 10, textRenderer: regular2)
-          ..anchor = Anchor.topCenter
-          ..x = 1500
-          ..y = 650;
-    
-    setGameModeText();
+        TextComponent(text: "D E M O", priority: 10, textRenderer: regular2)
+          ..anchor = Anchor.topCenter;
 
+    setGameModeText();
 
     skuchaComponent = SkuchaComponent();
     add(skuchaComponent);
 
-    add(punktyTextComponent);
     tloComponent = TloComponent()
       ..size = tloFixComponent.size
       ..position = tloFixComponent.position;
     add(tloComponent);
-
-
 
     obudowaComponent = ObudowaComponent(); //..size=ekranSize;
     add(obudowaComponent);
@@ -158,41 +164,46 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // buttonLD = ButtonComponent()
     //   ..position = Vector2(118, 470)
     //   ..size = Vector2(120, 120);
- 
 
     timer = Timer(
       calcCzestotliwoscJaj(),
       onTick: () {
-        var rand = Random().nextInt(typGry==TypGry.gameA?4:3);
+        var rand = Random().nextInt(typGry == TypGry.gameA ? 4 : 3);
         add(Jajo(calcSpeedJaj(), typJajo: Typ.values[rand]));
-        if(gameState==GameState.idle){
-          int popPoz=wilkComponent.pozycja;
-          int r=Random().nextInt(4);
-          while(r==popPoz){r=Random().nextInt(4);}
+        if (gameState == GameState.idle) {
+          int popPoz = wilkComponent.pozycja;
+          int r = Random().nextInt(4);
+          while (r == popPoz) {
+            r = Random().nextInt(4);
+          }
           wilkComponent.setPozycjaWilka(r);
 
           setGameModeTextVisible(isGameModeComponentVisible);
-          isGameModeComponentVisible=!isGameModeComponentVisible;     
-          
+          isGameModeComponentVisible = !isGameModeComponentVisible;
+          skuchaComponent.setSkucha(Random().nextInt(5));
         }
       },
       autoStart: true,
       repeat: true,
     );
     children.register<Jajo>();
+
+    add(Zajac(7, true));
+
     gameIdle();
   }
 
-  setGameModeTextVisible(bool v)
-  {
-    if(isGameModeComponentVisible)
-          {
-            add(gameModeTextComponent);
-          }else
-          {
-            remove(gameModeTextComponent);
-          }
+  setGameModeTextVisible(bool v) {
+    if (isGameModeComponentVisible) {
+      if(!children.contains(gameModeTextComponent))
+      {
+      add(gameModeTextComponent);}
+    } else {
+      if(children.contains(gameModeTextComponent))
+      {remove(gameModeTextComponent);}
+    }
   }
+
   @override
   void update(double dt) {
     super.update(dt);
@@ -206,8 +217,9 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     }
     return r;
   }
+
   double calcCzestotliwoscJaj() {
-    double r = 2.5 - level * 0.01;
+    double r = 2.0 - level * 0.01;
     if (r < 0.3) {
       r = 0.30;
     }
@@ -220,153 +232,229 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   }
 
   nowaGra() {
-    
-    children.query<Jajo>().forEach((element) {remove(element);});
-   // print(jaja.length);
+    children.query<Jajo>().forEach((element) {
+      remove(element);
+    });
+    // print(jaja.length);
     resumeEngine();
-    //  overlays.remove('NewGameOverlay');
-    //print("Start nowej gry");
+    add(punktyTextComponent);
+
     level = 1;
-    nextLvlUp = 5;
-    
+    isBonusGame = false;
+    nextLvlUp = 2;
+
     setPunkty(0);
     skucha = 0;
     skuchaComponent.setSkucha(skucha);
 
     gameState = GameState.game;
     setGameModeText();
-    timer.limit=calcCzestotliwoscJaj();
-    //timer.start();
+    timer.limit = calcCzestotliwoscJaj();
 
     add(Jajo(calcSpeedJaj()));
   }
 
-  setGameModeText()
-  {
-    switch(gameState)
-    {
+  setGameModeText() {
+    switch (gameState) {
       case GameState.idle:
-      isGameModeComponentVisible=true;
-      gameModeTextComponent.text="D E M O";
-      
-      gameModeTextComponent.position=Vector2(1200, 600);
+        isGameModeComponentVisible = true;
+        gameModeTextComponent.text = "D E M O";
+
+        gameModeTextComponent.position = Vector2(1400, 500);
 
         break;
       case GameState.game:
-      if(typGry==TypGry.gameA)
-      {
-        isGameModeComponentVisible=true;
-        gameModeTextComponent.text="Mode A";
-        gameModeTextComponent.position=Vector2(850, 1120);
-      }else{
-        isGameModeComponentVisible=true;
-        gameModeTextComponent.text="Mode B";
-        gameModeTextComponent.position=Vector2(1800, 1120);
-      }
-      break;
+        if (typGry == TypGry.gameA) {
+          isGameModeComponentVisible = true;
+          gameModeTextComponent.text = "Mode A";
+          gameModeTextComponent.position = Vector2(850, 1120);
+        } else {
+          isGameModeComponentVisible = true;
+          gameModeTextComponent.text = "Mode B";
+          gameModeTextComponent.position = Vector2(1800, 1120);
+        }
+        break;
       default:
-        gameModeTextComponent.text="";
-      break;
+        gameModeTextComponent.text = "";
+        break;
     }
-    
   }
+
   gameIdle() {
-    
+    if(children.contains(punktyTextComponent))
+    {remove(punktyTextComponent);}
     gameState = GameState.idle;
     resumeEngine();
     setGameModeText();
-  
-    level=250;
+
+    level = 200;
     timer.limit = calcCzestotliwoscJaj();
   }
 
-  saveHighScoreA(int pkt,String name)
-  {
-    highScoreA=pkt;
-    prefs.setInt(highScoreATag,pkt);
-    prefs.setString(highScoreNameATag,name);
+  saveHighScoreA(int pkt, String name) {
+    highScoreA = pkt;
+    prefs.setInt(highScoreATag, pkt);
+    prefs.setString(highScoreNameATag, name);
   }
-  saveHighScoreB(int pkt,String name)
-  {
-    highScoreB=pkt;
-    prefs.setInt(highScoreBTag,pkt);
-    prefs.setString(highScoreNameBTag,name);
+
+  saveHighScoreB(int pkt, String name) {
+    highScoreB = pkt;
+    prefs.setInt(highScoreBTag, pkt);
+    prefs.setString(highScoreNameBTag, name);
   }
-  saveAudioSettings(bool isActive)
-  {
-    isAudio=isActive;
+
+  saveAudioSettings(bool isActive) {
+    isAudio = isActive;
     prefs.setBool(isAudioTag, isAudio);
   }
 
-  gameOver() {
+  startBonusLife() {
+    overlays.remove('GameOverAdScoreOverlay');
+    isBonusGame = true;
+    children.query<Jajo>().forEach((element) {
+      remove(element);
+    });
+    // print(jaja.length);
+    resumeEngine();
+   // children.contains(punktyTextComponent);
+    //add(punktyTextComponent);
+
+    level = level>150? 150: level~/2;
     
-    gameState = GameState.gameOver;
+    nextLvlUp = 2;
+
+    skucha = 2;
+    skuchaComponent.setSkucha(skucha);
+
     setGameModeText();
-   // timer.stop();
-    pauseEngine();
-    if(typGry==TypGry.gameA)
-    { // game A
-      if(punkty>highScoreA)
-      {
-       overlays.add("GameOverHighScoreOverlay");
-      }else { overlays.add("GameOverOverlay");}
-    }else
-    { // game B
-    if(punkty>highScoreB)
-      {
-       overlays.add("GameOverHighScoreOverlay");
-      }else { overlays.add("GameOverOverlay");}
-    }
-    
+    timer.limit = calcCzestotliwoscJaj();
+    gameResume();
   }
 
+  gameOverAskBonus() {
+    gameState = GameState.gameOver;
+    setGameModeText();
+    pauseEngine();
+    overlays.add("GameOverAdScoreOverlay");
+  }
+
+  gameOver() {
+    gameState = GameState.gameOver;
+    setGameModeText();
+    // timer.stop();
+    pauseEngine();
+    if(overlays.isActive('GameOverAdScoreOverlay'))
+    {
+       overlays.remove('GameOverAdScoreOverlay');
+    }
+    if (typGry == TypGry.gameA) {
+      // game A
+      if (punkty > highScoreA) {
+        overlays.add("GameOverHighScoreOverlay");
+      } else {
+        overlays.add("GameOverOverlay");
+      }
+    } else {
+      // game B
+      if (punkty > highScoreB) {
+        overlays.add("GameOverHighScoreOverlay");
+      } else {
+        overlays.add("GameOverOverlay");
+      }
+    }
+
+    //remove(punktyTextComponent);
+  }
+  late GameState stateBeforeOptions;
+  closeOptionsDialog()
+  {
+    gameState=stateBeforeOptions;
+    resumeEngine();
+    overlays.remove('OptionsOverlay');
+    overlays.remove('BanerOverlay');
+      setGameModeText();
+  }
+ showOptionsDialog() {
+  stateBeforeOptions=gameState;
+    gameState = GameState.optiosDialog;
+    pauseEngine();
+    overlays.add('OptionsOverlay');
+    setGameModeText();
+    overlays.add('BanerOverlay');
+
+ }
   gamePause() {
-   
     gameState = GameState.pause;
     pauseEngine();
     overlays.add('PauseGameOverlay');
     setGameModeText();
+    overlays.add('BanerOverlay');
   }
 
   gameResume() {
-    
+    overlays.remove('BanerOverlay');
     gameState = GameState.game;
     resumeEngine();
-  setGameModeText();
+    setGameModeText();
   }
 
   addjajoSkucha() {
-     if (gameState != GameState.game) {
+    if (gameState != GameState.game) {
       return;
     }
+    children.query<Jajo>().forEach((element) {
+      if (!element.czyStluczone) {
+        remove(element);
+      }
+    });
     skucha++;
     skuchaComponent.setSkucha(skucha);
     //print("skucha: $skucha");
-    if (skucha >=3 ) {
+    if (skucha >= 3) {
       //TODO: bonus punkt!!
-     gameOver();
+      if(isBonusGame) {gameOver();}else{gameOverAskBonus();}
+    } else {
+      add(Zajac(7, true));
     }
   }
-  setPunkty(int p)
-  {
-    punkty=p;
+
+  setPunkty(int p) {
+    punkty = p;
     punktyTextComponent.text = p.toString().padLeft(6, '0');
   }
+
   addPunkt() {
     if (gameState != GameState.game) {
       return;
     }
     setPunkty(++punkty);
-    
+
     if (punkty == nextLvlUp) {
       //print("leelUp");
       level++;
       //nextLvlUp *= 2;
-      nextLvlUp += 5;
+      if (level < 70) {
+        nextLvlUp += 1;
+      }
+      if (level >= 70 && level < 100) {
+        nextLvlUp += 2;
+      }
+      if (level >= 100 && level < 150) {
+        nextLvlUp += 4;
+      }
+      if (level >= 150 && level < 200) {
+        nextLvlUp += 8;
+      }
+      if (level >= 200) {
+        nextLvlUp += 10;
+      }
       timer.limit = calcCzestotliwoscJaj();
-     // print("lvl: $level,  ${timer.limit}, predkJaj: ${calcSpeedJaj()}");
+      if (level % 20 == 0) {
+        add(Zajac(3, false));
+      }
+      // print("lvl: $level,  ${timer.limit}, predkJaj: ${calcSpeedJaj()}");
     }
-    
+
     //nowaGra();
   }
 
@@ -385,7 +473,12 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         gameResume();
         break;
       default: //,extraLife,gameOver,pause}
+        
         break;
+    }
+    if(i==6)
+    {
+      showOptionsDialog();
     }
   }
 
@@ -394,4 +487,6 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     timer.stop();
     super.onRemove();
   }
+  
+ 
 }

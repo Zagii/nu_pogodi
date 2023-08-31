@@ -44,7 +44,7 @@ class ObudowaComponent extends SpriteComponent with TapCallbacks, HasGameRef<MyG
 
     parentSize=size;
  // final Image img = await images.load('obudowa.png');
-    sprite =await Sprite.load('obudowa.png');
+    sprite =await Sprite.load('obudowa2.png');
     pressedSprite = await gameRef.loadSprite('BtnDown.png');
     //unpressedSprite = await gameRef.loadSprite('BtnUp.png');
     

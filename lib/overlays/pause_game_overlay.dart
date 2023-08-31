@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:nu_pogodi/ad_helper.dart';
 import 'package:nu_pogodi/my_game.dart';
 
-class PauseGameOverlayComponent extends StatelessWidget {
-  const PauseGameOverlayComponent({Key? key, required this.game})
-      : super(key: key);
-  final MyGame game;
+
+class PauseGameOverlayComponent extends StatefulWidget {
+  const PauseGameOverlayComponent({super.key,required this.game});
+
+ final MyGame game;
+
+  @override
+  State<PauseGameOverlayComponent> createState() => _PauseGameOverlayComponentState();
+}
+
+class _PauseGameOverlayComponentState extends State<PauseGameOverlayComponent> {
+
+ @override
+  void initState() {
+    super.initState();
+
+   
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +30,7 @@ class PauseGameOverlayComponent extends StatelessWidget {
         alignment: Alignment.topCenter,
         children: [
           Positioned(
-              top: 10,
+              top: 50,
               //  left: 0,
               child: Container(
                   width: 300,
@@ -26,7 +42,8 @@ class PauseGameOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           const Positioned(
-              top: 50,
+              top: 90,
+              
               //  left: 0,
               child: Text("Pause",
                   style: TextStyle(
@@ -34,7 +51,7 @@ class PauseGameOverlayComponent extends StatelessWidget {
                       fontSize: 30,
                       color: Color.fromARGB(255, 48, 132, 44)))),
           Positioned(
-              top: 100,
+              top: 130,
               //  left: 0,
               child: Container(
                   width: 400,
@@ -46,7 +63,7 @@ class PauseGameOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           Positioned(
-              top: 120,
+              top: 135,
               left: 250,
               child: Container(
                   width: 70,
@@ -58,25 +75,25 @@ class PauseGameOverlayComponent extends StatelessWidget {
                     ),
                   ))),
           Positioned(
-              top: 150,
+              top: 170,
               //left: 0,
               // width: 300,
-              child: Text("Score: ${game.punkty}",
+              child: Text("Score: ${widget.game.punkty}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 25,
                       color: Color.fromARGB(255, 48, 132, 44)))),
           Positioned(
-              top: 200,
+              top: 220,
               //left: 0,
               width: 300,
-              child: Text("High score: ${game.typGry==TypGry.gameA? game.highScoreA:game.highScoreB}",
+              child: Text("High score: ${widget.game.typGry==TypGry.gameA? widget.game.highScoreA:widget.game.highScoreB}",
                   style: const TextStyle(
                       fontFamily: 'niceTango',
                       fontSize: 20,
                       color: Color.fromARGB(255, 48, 132, 44)))),
           Positioned(
-            top: 250,
+            top: 270,
             //left: 150,
             width: 200,
             child: Row(
@@ -94,8 +111,8 @@ class PauseGameOverlayComponent extends StatelessWidget {
                       borderRadius: BorderRadius.all(Radius.circular(10))),
                   backgroundColor: Colors.green.withAlpha(100),
                   onPressed: () {
-                    game.gameResume();
-                    game.overlays.remove('PauseGameOverlay');
+                    widget.game.gameResume();
+                    widget.game.overlays.remove('PauseGameOverlay');
                   },
                   child: Container(
                       width: 50,
