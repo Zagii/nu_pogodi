@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:nu_pogodi/ad_helper.dart';
 import 'package:nu_pogodi/my_game.dart';
 
 
@@ -93,7 +91,7 @@ class _OpcjeOverlayComponentState extends State<OpcjeOverlayComponent> {
           Positioned(
               top: 250,
               //left: 0,
-              width: 300,
+           //   width: 300,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -104,7 +102,7 @@ class _OpcjeOverlayComponentState extends State<OpcjeOverlayComponent> {
                           color: Color.fromARGB(255, 48, 132, 44))),
                     GestureDetector(
                       onTap: (){},
-                      child: const Text("Reset B",
+                      child: const Text("Watch video to reset high score B",
                         style:  TextStyle(
                             fontFamily: 'niceTango',
                             fontSize: 15,

@@ -6,7 +6,7 @@ import 'package:nu_pogodi/my_game.dart';
 
 
 class GameOverAdOverlayComponent extends StatefulWidget {
-   GameOverAdOverlayComponent({super.key, required this.game});
+   const GameOverAdOverlayComponent({super.key, required this.game});
     
   final MyGame game;
 
@@ -35,7 +35,7 @@ class _GameOverAdOverlayComponentState extends State<GameOverAdOverlayComponent>
                 ad.dispose();
                 _rewardedAd = null;
               });
-              _loadRewardedAd();
+             // _loadRewardedAd();
             },
           );
 

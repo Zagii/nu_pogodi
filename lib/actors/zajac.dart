@@ -19,7 +19,7 @@ class Zajac extends SpriteComponent with  HasGameRef<MyGame> {
   int sumCzas=0;
 
   int spriteId=0;
-  late Timer timer;
+  late Timer timerZajac;
 
   bool czyDzwonki=false;
 
@@ -38,7 +38,7 @@ class Zajac extends SpriteComponent with  HasGameRef<MyGame> {
       size = Vector2.all(220);
       position=Vector2(870, 420);
 
-      timer = Timer(
+      timerZajac = Timer(
       0.7,
       onTick: () {
         spriteId= spriteId == 0? 1:0;
@@ -53,13 +53,13 @@ class Zajac extends SpriteComponent with  HasGameRef<MyGame> {
       autoStart: true,
       repeat: true,
     );
-    timer.start();
+    timerZajac.start();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    timer.update(dt);
+    timerZajac.update(dt);
   }
 
   @override
@@ -75,7 +75,7 @@ class Zajac extends SpriteComponent with  HasGameRef<MyGame> {
 
   @override
   void onRemove() {
-    timer.stop();
+    timerZajac.stop();
     super.onRemove();
   }
 }

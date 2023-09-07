@@ -21,6 +21,8 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
     Vector2(1780, 780),
   ];
 
+
+
   Typ typ = Typ.lewaGora;
   // late SpriteAnimation jajoAnimation;
   late SpriteSheet spriteSheetJajo;
@@ -90,6 +92,7 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
         spriteSkorupka = await Sprite.load("skorupkiP.png");
         break;
     }
+    
     sprite = spriteSheetJajo.getSpriteById(spirteIndex);
     size = jajoSize;
 
@@ -145,17 +148,24 @@ class Jajo extends SpriteComponent with CollisionCallbacks, HasGameRef<MyGame> {
       return;
     }
     sum = 0;
-
+ 
     sprite = getNextSprite();
     position.y += 23;
     int znak = (typ == Typ.lewaGora || typ == Typ.lewaDol) ? 1 : -1;
 
     if (!czyStluczone) { // jesli nie stluczone
+     if(gameRef.gameState==GameState.game)
+       {
+        //gameRef.audioList[typ.index].start();
+        }
       if (spirteIndex > 5) { // rozbicie skorupki
        
         position.x = (typ == Typ.lewaGora || typ == Typ.lewaDol)? 930 : 1500;
         position.y = 1030;
         czyStluczone = true;
+        if(gameRef.gameState==GameState.game){
+        //gameRef.audioList[AudioPlay.skucha.index].start();
+        }
         gameRef.addjajoSkucha();
       } else { //turlanie
         position.x += 40 * znak;

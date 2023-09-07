@@ -74,12 +74,13 @@ late WilkKolizaComponent wilkKolizjaComponent;
   update(double dt) {}
   setPozycjaWilka(int newPozycja) {
     pozycja = newPozycja;
-    for (int i = 0; i < 4; i++) {
-      if (pozycja == i) {
-        wilkKolizjaComponent.position=spriteList[i].pozycja;
+  //  for (int i = 0; i < 4; i++) {
+     // if (pozycja == i) {
+       // wilkKolizjaComponent.position=spriteList[i].pozycja;
+       wilkKolizjaComponent.position=spriteList[newPozycja].pozycja;
         
-      }
-    }
+    //  }
+   // }
   }
 
   startGame() {

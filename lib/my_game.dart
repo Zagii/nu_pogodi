@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+//import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:nu_pogodi/actors/jajo.dart';
 import 'package:nu_pogodi/actors/wilk.dart';
@@ -17,7 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum GameState { idle, game, extraLife, gameOver, pause,optiosDialog }
 
 enum TypGry { gameA, gameB }
-
+enum AudioPlay { jajoLD,jajoLG,jajoPD,jajoPG,skucha,gameOver,highScore,odliczanie}
 class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   int skucha = 0;
   int punkty = 0;
@@ -43,7 +44,8 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   GameState gameState = GameState.idle;
 
-  late Timer timer;
+  late Timer timerJaj;
+  late Timer timerIdle;
 
   late WilkComponent wilkComponent;
   late RectangleComponent tloPodwietlenie;
@@ -68,19 +70,28 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   final world = World();
   late final CameraComponent cameraComponent;
 
-  // Future<InitializationStatus> _initGoogleMobileAds() {
-  //   // TODO: Initialize Google Mobile Ads SDK
-  //   return MobileAds.instance.initialize();
-  // }
-
+  final audioFiles=['1-mixkit-quick-lock-sound-2854.wav', '2-mixkit-arcade-game-jump-coin-216.wav',
+                    '3-mixkit-explainer-video-game-alert-sweep-236.wav', '4-mixkit-retro-game-notification-212.wav',
+       /*skucha*/   '5-mixkit-arcade-space-shooter-dead-notification-272.wav',
+       /*gameOver*/ '6-mixkit-retro-arcade-game-over-470.wav',
+       /*highScore*/'7-mixkit-fairy-arcade-sparkle-866.wav',
+       /*odliczanie*/'8-mixkit-race-countdown-1953.wav'];
+  
+  //List<AudioPool>  audioList=[];
+  
+  
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    //await _initGoogleMobileAds();
 
-    AdHelper appOpenAdManager = AdHelper()..loadAd();
-    appLifecycleReactor =
-        AppLifecycleReactor(appOpenAdManager: appOpenAdManager);
+    // for(String f in audioFiles)
+    // {
+    //  // audioList.add(await FlameAudio.createPool(f, maxPlayers: 16));
+    // }
+
+    // AdHelper appOpenAdManager = AdHelper()..loadAd();
+    // appLifecycleReactor =
+    //     AppLifecycleReactor(appOpenAdManager: appOpenAdManager);
 
     prefs = await SharedPreferences.getInstance();
 
@@ -165,41 +176,57 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     //   ..position = Vector2(118, 470)
     //   ..size = Vector2(120, 120);
 
-    timer = Timer(
+    timerJaj = Timer(
       calcCzestotliwoscJaj(),
       onTick: () {
+        try{
+      //  print("*************tick timer");
         var rand = Random().nextInt(typGry == TypGry.gameA ? 4 : 3);
-        add(Jajo(calcSpeedJaj(), typJajo: Typ.values[rand]));
-        if (gameState == GameState.idle) {
-          int popPoz = wilkComponent.pozycja;
-          int r = Random().nextInt(4);
-          while (r == popPoz) {
-            r = Random().nextInt(4);
-          }
-          wilkComponent.setPozycjaWilka(r);
 
-          setGameModeTextVisible(isGameModeComponentVisible);
-          isGameModeComponentVisible = !isGameModeComponentVisible;
-          skuchaComponent.setSkucha(Random().nextInt(5));
+        add(Jajo(calcSpeedJaj(), typJajo: Typ.values[rand]));
+        
+       
+        }catch(e){
+          print("timer exception");
         }
       },
       autoStart: true,
       repeat: true,
     );
+
+    timerIdle=Timer(
+      0.5,
+     onTick: () {
+      if (gameState == GameState.idle) {
+          int popPoz = wilkComponent.pozycja;
+          int r = Random().nextInt(4);
+          while (r == popPoz) {
+            r = Random().nextInt(4);
+          }
+          if(wilkComponent.isLoaded)
+          {wilkComponent.setPozycjaWilka(r);}
+
+          setGameModeTextVisible(isGameModeComponentVisible);
+          isGameModeComponentVisible = !isGameModeComponentVisible;
+          skuchaComponent.setSkucha(Random().nextInt(5));
+        }},
+         autoStart: true,
+      repeat: true,
+    );
     children.register<Jajo>();
+     children.register<TextComponent>();
 
     add(Zajac(7, true));
-
+   //
     gameIdle();
   }
 
   setGameModeTextVisible(bool v) {
     if (isGameModeComponentVisible) {
-      if(!children.contains(gameModeTextComponent))
-      {
-      add(gameModeTextComponent);}
+      if(gameModeTextComponent.parent==null)
+       { add(gameModeTextComponent);}
     } else {
-      if(children.contains(gameModeTextComponent))
+      if(gameModeTextComponent.parent!=null)
       {remove(gameModeTextComponent);}
     }
   }
@@ -207,7 +234,20 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   @override
   void update(double dt) {
     super.update(dt);
-    timer.update(dt);
+    if(!timerJaj.isRunning()) // nie wiem czemu sie on zatrzymal
+    {
+      print("wznawiam timerJaj");
+      timerJaj.start();
+    }
+    timerJaj.update(dt);
+    if(gameState==GameState.idle){ 
+       if(!timerIdle.isRunning())
+    {
+      print("wznawiam timerIdle");
+      timerIdle.start();
+    }
+      timerIdle.update(dt);
+      }
   }
 
   double calcSpeedJaj() {
@@ -239,6 +279,8 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     resumeEngine();
     add(punktyTextComponent);
 
+// timer.start();
+
     level = 1;
     isBonusGame = false;
     nextLvlUp = 2;
@@ -249,7 +291,7 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     gameState = GameState.game;
     setGameModeText();
-    timer.limit = calcCzestotliwoscJaj();
+    timerJaj.limit = calcCzestotliwoscJaj();
 
     add(Jajo(calcSpeedJaj()));
   }
@@ -281,14 +323,15 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   }
 
   gameIdle() {
-    if(children.contains(punktyTextComponent))
-    {remove(punktyTextComponent);}
+    // if(children.contains(punktyTextComponent))
+    // {remove(punktyTextComponent);}
     gameState = GameState.idle;
+    timerIdle.start();
     resumeEngine();
     setGameModeText();
 
     level = 200;
-    timer.limit = calcCzestotliwoscJaj();
+    timerJaj.limit = calcCzestotliwoscJaj();
   }
 
   saveHighScoreA(int pkt, String name) {
@@ -327,7 +370,7 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     skuchaComponent.setSkucha(skucha);
 
     setGameModeText();
-    timer.limit = calcCzestotliwoscJaj();
+    timerJaj.limit = calcCzestotliwoscJaj();
     gameResume();
   }
 
@@ -448,7 +491,7 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       if (level >= 200) {
         nextLvlUp += 10;
       }
-      timer.limit = calcCzestotliwoscJaj();
+      timerJaj.limit = calcCzestotliwoscJaj();
       if (level % 20 == 0) {
         add(Zajac(3, false));
       }
@@ -484,7 +527,8 @@ class MyGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   @override
   void onRemove() {
-    timer.stop();
+    timerJaj.stop();
+    timerIdle.stop();
     super.onRemove();
   }
   

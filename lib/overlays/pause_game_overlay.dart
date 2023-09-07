@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:nu_pogodi/ad_helper.dart';
 import 'package:nu_pogodi/my_game.dart';
 
 

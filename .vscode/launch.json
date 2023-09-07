@@ -10,18 +10,18 @@
             "request": "attach"
         },
         {
-            "name": "nu_pogodi",
+            "name": "egg",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "nu_pogodi (profile mode)",
+            "name": "egg (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "nu_pogodi (release mode)",
+            "name": "egg (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
